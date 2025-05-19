@@ -5,6 +5,7 @@ const Handlebars = require('handlebars');
 const { MongoClient } = require('mongodb');
 const client = require('prom-client');
 const crypto = require('crypto');
+const geoip = require('geoip-lite');
 
 // Inicjalizacja metryk
 const register = new client.Registry();
@@ -76,7 +77,11 @@ app.post('/', async (req, res) => {
 
         const publicIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-        const logEntry = `timestamp="${new Date().toISOString()}" username="${username}" password="${password}" passwordLength="${passwordLength}" passwordType="${passwordType}" ip="${publicIp}"\n`;
+        const geo = geoip.lookup(publicIp.replace(/::ffff:/, ''));
+        
+        const country = geo && geo.country ? geo.country : "none";
+
+        const logEntry = `timestamp="${new Date().toISOString()}" username="${username}" password="${password}" passwordLength="${passwordLength}" passwordType="${passwordType}" ip="${publicIp.replace(/::ffff:/, '')}" country="${country}"\n`;
             fs.appendFileSync('./logs/honeypot.log', logEntry);
 
         console.log(`Login attempt from ${req.ip}:`, {
