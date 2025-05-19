@@ -74,6 +74,11 @@ app.post('/', async (req, res) => {
             ? crypto.createHash('sha256').update(password).digest('hex').substring(0, 6)
             : 'empty';
 
+        const publicIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+        const logEntry = `timestamp="${new Date().toISOString()}" username="${username}" password="${password}" passwordLength="${passwordLength}" passwordType="${passwordType}" ip="${publicIp}"\n`;
+            fs.appendFileSync('./logs/honeypot.log', logEntry);
+
         console.log(`Login attempt from ${req.ip}:`, {
             username,
             password,
